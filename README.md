@@ -23,10 +23,10 @@ All of the above scripts can be called with the `-h` option to print a usage sta
 To start, you will need to install the [GoogleCloudSDK]
 ```sh
 # Open a terminal [ctrl-shift-t]
-curl https://sdk.cloud.google.com | bash`
+curl https://sdk.cloud.google.com | bash
 # Restart the terminal
-gcloud auth login` # Enter you Google Developer Credentials
-gcloud config set project $PROJECT_NAME` # *optional* but convenient if you're only working on one project
+gcloud auth login # Enter you Google Developer Credentials
+gcloud config set project $PROJECT_NAME # *optional* but convenient if you're only working on one project
 ```
 
 Now you can clone this project and configure
