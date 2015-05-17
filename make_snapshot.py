@@ -9,7 +9,9 @@ SCOPE2 = "https://www.googleapis.com/auth/logging.write"
 
 def print_help() :
 	print "This creates a new snapshot of an existing VM instance"
-	print "Usage : make_snapshot.py [-h] instance_name snapshot_name"
+	print "Usage : make_snapshot.py [-h -d] instance_name snapshot_name project_name"
+	print "-h : prints this help message"
+	print "-d : uses whatever default values have been stored by config.sh"
 
 if __name__ == "__main__":
 	instance_name = ""
@@ -17,13 +19,23 @@ if __name__ == "__main__":
 	zone = ""
 	machine_type = ""
 
-	if len(sys.argv) >= 2 and sys.argv[1] in ["-h", "-help", "help"] :
+	opts = get_opts(sys.argv)
+	defs = {}
+	args = sys.argv[len(opts):]
+
+	if "help" in opts :
 		print_help()
 		sys.exit(0)
 
+	if "default" in opts :
+		defs = load_defaults()
+		# if they only have one def. project set
+		if len(defs["projects"]) == 1 :
+			project = defs["projects"][0]
+
 	# if a name is specified as an arg
-	if len(sys.argv) >= 2 :
-		instance_name = sys.argv[1]
+	if len(args) >= 2 :
+		instance_name = args[1]
 		instances = get_instance_names()
 		pairs = get_instance_pairs()
 
@@ -40,8 +52,8 @@ if __name__ == "__main__":
 	else :
 		(instance_name, zone) = get_instance_pair()
       
-	if len(sys.argv) >= 3 :
-		snapshot_name = sys.argv[2]
+	if len(args) >= 3 :
+		snapshot_name = args[2]
 		names = get_snapshot_names()
 
 		if snapshot_name in names :
@@ -56,6 +68,13 @@ if __name__ == "__main__":
 
 	print "Please Enter a Snapshot Description : \n"
 	desc = stdin.readline()
+
+		# get project name
+	if project == "" and len(args) >= 4 :
+		project = args[2]
+
+	elif project == "" :
+		project = select_project_name()
 	
 
 	try :
@@ -76,7 +95,7 @@ if __name__ == "__main__":
 		update_snapshot_list()
 
 	except subprocess.CalledProcessError, e:
-		print "Error : Failed to Create Snapshot \n" + str(e)
+		print "Error : Failed to Create Snapshot" + instance_name +"\n"+ str(e)
 
 
 

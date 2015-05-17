@@ -14,6 +14,11 @@ STARTUP_FN = "startup_scripts"
 PROJECT_NAME = "" # TODO implement config to set PROJECT_NAME
 BOOT_IMAGES_FN = "data/boot_images"
 
+DEFAULT_ZONE_FN = ZONE_FN + "_default"
+DEFAULT_MACHINE_FN = MACHINE_FN + "_default"
+DEFAULT_BOOT_FN = BOOT_IMAGES_FN + "_default"
+DEFAULT_PROJECT_FN = "data/projects"
+
 def is_non_empty_file(fpath):  
     return True if os.path.isfile(fpath) and os.path.getsize(fpath) > 0 else False
 
@@ -60,6 +65,13 @@ def get_startup_script_names() :
 # returns a list of all of the OS iamges for booting
 def get_boot_image_names() :
 	return [line.strip() for line in open(BOOT_IMAGES_FN)]
+
+# returns a list of all stored project names
+def get_project_names() :
+	if is_non_empty_file(INSTANCE_FN) :
+		return [line.strip() for line in open(DEFAULT_PROJECT_FN)]
+	else :
+		return []
 
 # removes a single instance reference from the file (deprecated)
 def remove_instance_from_file(instance_name) :
@@ -187,6 +199,9 @@ def get_snapshot_name() :
 # the selected one
 def get_startup_script() :
 	scripts = get_startup_script_names()
+	if len(scripts) == 0 :
+		return ""
+
 	i = 1
 	print "Please Select a Startup-Script Number : \n"
 
@@ -236,3 +251,81 @@ def get_new_snapshot_name() :
 			new_name = ""
 
 	return new_name
+
+def enter_project_name() :
+	name = ""
+	print "Enter the name for this Google Dev. project : "
+	while name == "" :
+		name = stdin.readline()
+
+	PROJECT_NAME = name
+	return name
+
+def select_project_name() :
+	names = get_project_names()
+
+	if len(names) == 0 :
+		name = enter_project_name()
+		return name
+	i = 1
+	print "Select one of the following projects (or 0 for new project): "
+
+	for name in names :
+		print str(i) + " : " + name
+
+	num = -1
+	while num < 0 or num > (i) :
+		num = int(stdin.readline())
+
+	if num == 0 : # select new project name
+		name = enter_project_name()
+		return name
+
+	PROJECT_NAME = names[i-1]
+	return names[i-1]
+
+def get_confirm(s) :
+	print s + " (Y/n)"
+	inp = ""
+
+	while len(inp) == 0 :
+		inp = stdin.readline()
+
+	if inp.strip()[0] in ['y', 'Y', 'Yes', 'yes'] :
+		return True
+	else :
+		return False
+
+
+def get_opts(argv) :
+	ret = []
+	for s in argv :
+		if s == "-h" :
+			ret.append("help")
+		if s == "-d" :
+			ret.append("default")
+	return ret
+
+def load_defaults() :
+	ret = {}
+	if is_non_empty_file(DEFAULT_PROJECT_FN) :
+		ret["projects"] = [line.strip() for line in open(DEFAULT_PROJECT_FN)]
+	else :
+		ret["projects"] = ""
+
+	if is_non_empty_file(DEFAULT_ZONE_FN) :
+		ret["zone"] = [line.strip() for line in open(DEFAULT_ZONE_FN)][0]
+	else :
+		ret["zone"] = ""
+
+	if is_non_empty_file(DEFAULT_BOOT_FN) :
+		ret["image"] = [line.strip() for line in open(DEFAULT_BOOT_FN)][0]
+	else :
+		ret["image"] = ""
+
+	if is_non_empty_file(DEFAULT_MACHINE_FN) :
+		ret["machine"] = [line.strip() for line in open(DEFAULT_MACHINE_FN)][0]
+	else :
+		ret["machine"] = ""
+
+	return ret

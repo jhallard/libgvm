@@ -9,21 +9,34 @@ SCOPE2 = "https://www.googleapis.com/auth/logging.write"
 
 def print_help() :
 	print "This removes an existing VM instance"
-	print "Usage : remove_instance.py [-h] instance_name"
+	print "Usage : remove_instance.py [-h -d] instance_name project_name"
+	print "-h : prints this help message"
+	print "-d : uses whatever default values have been stored by config.sh"
 
 if __name__ == "__main__":
 	instance_name = ""
 	snapshot_name = ""
 	zone = ""
 	machine_type = ""
+	project = ""
 
-	if len(sys.argv) >= 2 and sys.argv[1] in ["-h", "-help", "help"] :
+	opts = get_opts(sys.argv)
+	defs = {}
+	args = sys.argv[len(opts):]
+
+	if "help" in opts :
 		print_help()
 		sys.exit(0)
 
+	if "default" in opts :
+		defs = load_defaults()
+		# if they only have one def. project set
+		if len(defs["projects"]) == 1 :
+			project = defs["projects"][0]
+
 	# if a name is specified as an arg
-	if len(sys.argv) >= 2 :
-		instance_name = sys.argv[1]
+	if len(args) >= 2 :
+		instance_name = args[1]
 		instances = get_instance_names()
 		pairs = get_instance_pairs()
 
@@ -39,13 +52,19 @@ if __name__ == "__main__":
 				zone = pair[1]
 	else :
 		(instance_name, zone) = get_instance_pair()
+
+	# get project name
+	if project == "" and len(args) >= 3 :
+		project = args[2]
+
+	elif project == "" :
+		project = select_project_name()
      
 	
 	
-	print "Would you like to make a snapshot of instance : " + instance_name + " before deleting it?"
-	inp = stdin.readline().strip()
+	inp = get_confirm("Would you like to make a snapshot of instance : " + instance_name + " before deleting it?")
 
-	if inp == 'y' or inp == 'Y' or inp == 'yes' :
+	if inp == True :
 		path = os.getcwd()+'/make_snapshot.py'
 		ret = subprocess.call([path, instance_name])
 	else :
@@ -55,14 +74,14 @@ if __name__ == "__main__":
 	try :
 
 		ret = subprocess.check_output(['gcloud','compute', 'instances', 'delete',
-			instance_name, '--zone', zone, '-q'])
+			instance_name, '--zone', zone, '-q', '--project', project])
 
 		# remove_instance_from_file(instance_name)
 		update_instances_list()
 
 	except subprocess.CalledProcessError, e:
 
-		print "Error : Failed to Start Instance \n" + str(e)
+		print "Error : Failed to Remove Instance \n" + str(e)
 
 
 

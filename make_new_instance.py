@@ -10,7 +10,9 @@ SCOPE2 = "https://www.googleapis.com/auth/logging.write"
 def print_help() :
 	print "This creats a new VM instance from scratch using a " + \
 	"boot image OS provided by Google."
-	print "Usage : make_new_instance.py [-h] instance_name machine_type zone startup_script boot_image"
+	print "Usage : make_new_instance.py [-h -d] instance_name machine_type zone startup_script boot_image project_name"
+	print "-h : prints this help message"
+	print "-d : uses whatever default values have been stored by config.sh"
 
 
 if __name__ == "__main__":
@@ -20,13 +22,26 @@ if __name__ == "__main__":
 	script = ""
 	boot_image = ""
 
-	if len(sys.argv) >= 2 and sys.argv[1] in ["-h", "-help", "help"] :
+	opts = get_opts(sys.argv)
+	defs = {}
+	args = sys.argv[len(opts):]
+
+	if "help" in opts :
 		print_help()
 		sys.exit(0)
 
+	if "default" in opts :
+		defs = load_defaults()
+		machine_type = defs["machine"]
+		zone = defs["zone"]
+		boot_image = defs["image"]
+		# if they only have one def. project set
+		if len(defs["projects"]) == 1 :
+			project = defs["projects"][0]
+
 	# if a name is specified as an arg
-	if len(sys.argv) >= 2 :
-		instance_name = sys.argv[1]
+	if len(args) >= 2 :
+		instance_name = args[1]
 		instances = get_instance_names()
 
 		if instance_name in instances :
@@ -35,8 +50,8 @@ if __name__ == "__main__":
 	else :
 		instance_name = get_new_instance_name()
       
-	if len(sys.argv) >= 3 :
-		machine_type = sys.argv[2]
+	if machine_type == "" and len(args) >= 3 :
+		machine_type = args[2]
 		types = get_machine_names()
 
 		if machine_type not in types :
@@ -46,11 +61,11 @@ if __name__ == "__main__":
 				print x
 			sys.exit(1)
 
-	else :
+	elif machine_type == "":
 		machine_type = get_machine_type()
 	
-	if len(sys.argv) >= 4 :
-		zone = sys.argv[3]
+	if zone == "" and len(args) >= 4 :
+		zone = args[3]
 		zones = get_zone_names()
 
 		if zone not in zones :
@@ -59,11 +74,11 @@ if __name__ == "__main__":
 			for x in zones :
 				print x
 			sys.exit(1)
-	else :
+	elif zone == "" :
 		zone = get_zone()
 
-	if len(sys.argv) >= 5 :
-		script = sys.argv[4]
+	if len(args) >= 5 :
+		script = args[4]
 		scripts = get_startup_script_names()
 
 		if script not in scripts :
@@ -76,32 +91,40 @@ if __name__ == "__main__":
 		script = get_startup_script()
 
 
-	if len(sys.argv) >= 6 :
-		image = sys.argv[5]
+	if boot_image == "" and len(args) >= 6 :
+		boot_image = args[5]
 		images = get_boot_image_names()
 
-		if image not in images :
+		if boot_image not in images :
 			print "Invalid Boot Image Entry (argv[5]) \n"
 			print "Valid Images are : \n"
 			for x in images :
 				print x
 			sys.exit(1)
-	else :
-		image = get_boot_image()
+	elif boot_image == "" :
+		boot_image = get_boot_image()
+
+		# get project name
+	if project == "" and len(args) >= 7 :
+		project = args[6]
+
+	elif project == "" :
+		project = select_project_name()
+	
 
 
 	try :
 
 		if script == "" :
-			ret = subprocess.check_output(['gcloud','compute','--project', PROJECT_NAME, 'instances', 'create',
+			ret = subprocess.check_output(['gcloud','compute','--project', project, 'instances', 'create',
 				instance_name, '--zone', zone, '--machine-type', machine_type, '--network', 'default',
 				'--maintenance-policy', 'MIGRATE', '--scopes='+SCOPE1+','+SCOPE2, '--tags=http-server,https-server',
-				'--image', image, '--boot-disk-type', 'pd-standard', '--boot-disk-device-name', instance_name])
+				'--image', boot_image, '--boot-disk-type', 'pd-standard', '--boot-disk-device-name', instance_name])
 		else :
-			ret = subprocess.check_output(['gcloud','compute','--project', PROJECT_NAME, 'instances', 'create', instance_name,
+			ret = subprocess.check_output(['gcloud','compute','--project', project, 'instances', 'create', instance_name,
 				'--metadata-from-file','startup-script='+script, '--zone', zone, '--machine-type', machine_type,
 				'--network', 'default', '--maintenance-policy', 'MIGRATE', '--scopes='+SCOPE1+','+SCOPE2, 
-				'--tags=http-server,https-server', '--image', image, '--boot-disk-type', 'pd-standard',
+				'--tags=http-server,https-server', '--image', boot_image, '--boot-disk-type', 'pd-standard',
 				'--boot-disk-device-name', instance_name])
 
 		# update the file that keeps track of instances

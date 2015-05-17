@@ -17,7 +17,9 @@ It also contains all of the zone and machine-type names for quick selection when
 * `remove_instance.py` - Delete a running VM instance, gives the opportunity to make a snapshot before deleting.
 * `remove_snapshot.py` - Delete a saved VM snapshot.
 
-All of the above scripts can be called with the `-h` option to print a usage statement.
+#### Startup-scripts
+
+Simply place any startup scripts you need in the `/startup_scripts/` directory, then when you try to use one when calling `make_new_instance.py` a list of startup scripts from that directory will be presented to you to choose from.
 
 ##### Get LibGVM
 To start, you will need to install the [GoogleCloudSDK]
@@ -33,10 +35,21 @@ Now you can clone this project and configure
 ```sh
 git clone https://github.com/jhallard/libgvm.git
 cd libgvm.git
-cmod +x config.py && ./config.py
+cmod +x config.sh && ./config.sh
 ```
 
-There isn't much to configure, it will just ask you for your project name and to set a directory or two.
+The configuration will allow you to set some default values for the library, note that these defaults are only used if a script is called with the `-d` option. The defaults are as follows :
+* zone - Set the default region (us-central1, asia-east1, etc) for all future vm creations.
+* machine type - Set the default machine type (n1-standard, g1-small, etc.).
+* boot image - Set the default OS boot image (ubuntu 15.04, Debian-7, etc.).
+* projects - Set the list of project names that belong to you through Google Developers Console. If only one is set that one will be auto selected with the `-d` option.
+
+##### Options
+* `-h` - Prints a usage statement of deccription of the program.
+* `-d` - Uses any default values it can load from the default files stored in `/data/`
+
+The default values it can load are zone, machine type, boot-image, and project name. Instance names and snapshot names must be entered manually in-script or as arguments.
+
 
 ####License
 MIT

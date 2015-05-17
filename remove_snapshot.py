@@ -9,20 +9,33 @@ SCOPE2 = "https://www.googleapis.com/auth/logging.write"
 
 def print_help() :
 	print "This deletes an existing snapshot"
-	print "Usage : remove_snapshot.py [-h] snapshot_name"
+	print "Usage : remove_snapshot.py [-h -d] snapshot_name project_name"
+	print "-h : prints this help message"
+	print "-d : uses whatever default values have been stored by config.sh"
 
 if __name__ == "__main__":
 	instance_name = ""
 	snapshot_name = ""
 	zone = ""
 	machine_type = ""
+	project = ""
 
-	if len(sys.argv) >= 2 and sys.argv[1] in ["-h", "-help", "help"] :
+	opts = get_opts(sys.argv)
+	defs = {}
+	args = sys.argv[len(opts):]
+
+	if "help" in opts :
 		print_help()
 		sys.exit(0)
+
+	if "default" in opts :
+		defs = load_defaults()
+		# if they only have one def. project set
+		if len(defs["projects"]) == 1 :
+			project = defs["projects"][0]
       
-	if len(sys.argv) >= 2 :
-		snapshot_name = sys.argv[1]
+	if len(args) >= 2 :
+		snapshot_name = args[1]
 		names = get_snapshot_names()
 
 		if snapshot_name not in names :
@@ -35,20 +48,18 @@ if __name__ == "__main__":
 	else :
 		snapshot_name = get_snapshot_name()
 	
+	# get project name
+	if project == "" and len(args) >= 3 :
+		project = args[2]
+
+	elif project == "" :
+		project = select_project_name()
+	
 
 	try :
 
-		snapshot_path="https://www.googleapis.com/compute/v1/projects/"
-		snapshot_path+=PROJECT_NAME
-		snapshot_path+="/zones/us-central1-b/disks/"
-		snapshot_path+=instance_name
 		ret = subprocess.check_output(['gcloud','compute','snapshots', 'delete', snapshot_name,
-		 '--project', PROJECT_NAME ])
-
-		# out = ret.split('\n')[1]
-		# with open(SNAPSHOT_FN, "a") as myfile:
-		#     myfile.write(snapshot_name + " " + zone + '\n')
-		# sys.exit(0)
+		 '--project', project ])
 
 		update_snapshot_list()
 
