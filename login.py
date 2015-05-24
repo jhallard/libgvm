@@ -11,15 +11,19 @@ def print_help() :
 
 if __name__ == "__main__":
 
-	if len(sys.argv) >= 2 and sys.argv[1] in ["-h", "-help", "help"] :
+	opts = get_opts(sys.argv)
+	defs = {}
+	args = sys.argv[len(opts):]
+
+	if "help" in opts :
 		print_help()
 		sys.exit(0)
 
 # if a name is specified as an arg
-	if len(sys.argv) >= 2 :
+	if len(args) >= 2 :
 		content = [line.strip() for line in open(INSTANCE_FN)]
 		for line in content :
-			if line.split()[0] == sys.argv[1]:
+			if line.split()[0] == args[0]:
 				subprocess.call(['gcloud','compute','ssh', instance_name, '--zone', line.split()[1]])
 				sys.exit(0)       
 

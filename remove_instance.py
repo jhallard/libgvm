@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
 
 	try :
-
+		# print instance_name + "\n" + zone + "\n" + project
 		ret = subprocess.check_output(['gcloud','compute', 'instances', 'delete',
 			instance_name, '--zone', zone, '-q', '--project', project])
 

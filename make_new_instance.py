@@ -21,6 +21,7 @@ if __name__ == "__main__":
 	zone = ""
 	script = ""
 	boot_image = ""
+	project = ""
 
 	opts = get_opts(sys.argv)
 	defs = {}

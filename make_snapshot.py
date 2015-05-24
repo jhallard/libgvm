@@ -18,6 +18,7 @@ if __name__ == "__main__":
 	snapshot_name = ""
 	zone = ""
 	machine_type = ""
+	project = ""
 
 	opts = get_opts(sys.argv)
 	defs = {}
