@@ -231,7 +231,7 @@ def get_new_instance_name() :
 	while new_name == "" :
 		new_name = stdin.readline().strip()
 		if new_name.strip() in instance_names :
-			print "Instance Name Alread Exists, Try Again : "
+			print "Instance Name Already Exists, Try Again : "
 			new_name = ""
 
 	return new_name
